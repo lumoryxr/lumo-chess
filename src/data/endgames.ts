@@ -10,7 +10,7 @@ export const ENDGAMES: Endgame[] = [
     subtitle: '经典残局第一式',
     category: '炮马类',
     difficulty: '入门',
-    fen: '3k5/9/3C5/9/9/9/9/9/4H4/3K5',
+    fen: '4k4/9/9/4H4/9/5C3/9/9/9/4K4',
     turn: 'red',
     goal: '红先胜',
     targetMoves: 2,
