@@ -17,6 +17,9 @@ const FEN_MAP: Record<string, { type: PieceType; color: Color }> = {
   r: { type: 'R', color: 'black' },
   c: { type: 'C', color: 'black' },
   p: { type: 'P', color: 'black' },
+  // Elephant/bishop alias (standard xiangqi FEN uses B/b for 相/象)
+  B: { type: 'E', color: 'red' },
+  b: { type: 'E', color: 'black' },
 };
 
 export function parseFen(fen: string): Board {
