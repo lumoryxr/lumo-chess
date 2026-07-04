@@ -311,13 +311,3 @@ export function getBestMove(board: Board, color: Color, opts: { maxDepth?: numbe
   }
   return best;
 }
-
-// The opponent AI thinks a little faster; the hint is allowed to think longer.
-// Depth is chosen adaptively from the piece count inside getBestMove.
-export function getAIMove(board: Board, color: Color): Move | null {
-  return getBestMove(board, color, { timeMs: 700 });
-}
-
-export function getHintMove(board: Board, color: Color): Move | null {
-  return getBestMove(board, color, { timeMs: 1500 });
-}

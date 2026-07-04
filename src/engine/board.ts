@@ -260,6 +260,23 @@ export function isCheckmate(board: Board, color: Color): boolean {
   return getAllLegalMoves(board, color).length === 0 && isKingInCheck(board, color);
 }
 
+// Only 车/马/炮/兵 can ever deliver checkmate; 将/士/象 alone cannot.
+export function hasMatingMaterial(board: Board, color: Color): boolean {
+  for (let r = 0; r < 10; r++)
+    for (let c = 0; c < 9; c++) {
+      const p = board[r][c];
+      if (p?.color === color && (p.type === 'R' || p.type === 'H' || p.type === 'C' || p.type === 'P'))
+        return true;
+    }
+  return false;
+}
+
+// Dead draw: neither side has any piece capable of forcing checkmate
+// (e.g. both reduced to king + advisors/elephants).
+export function isInsufficientMaterial(board: Board): boolean {
+  return !hasMatingMaterial(board, 'red') && !hasMatingMaterial(board, 'black');
+}
+
 export function isStalemate(board: Board, color: Color): boolean {
   return getAllLegalMoves(board, color).length === 0 && !isKingInCheck(board, color);
 }
