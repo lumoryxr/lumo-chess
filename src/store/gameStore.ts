@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import type { Board, Color, GameStatus, Move, Position } from '@/types/chess';
 import type { Endgame } from '@/types/chess';
 import { parseFen, getLegalMoves, applyMove, isCheckmate, isStalemate, posEq } from '@/engine/board';
-import { getHintMove } from '@/engine/ai';
+import { getHintMove, getAIMove } from '@/engine/ai';
 
 interface GameStore {
   // Navigation
@@ -109,15 +109,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
     let status: GameStatus = 'playing';
     let winner: Color | undefined;
 
-    if (isCheckmate(nextBoard, nextTurn)) {
+    // In xiangqi, a side with no legal move loses — whether by checkmate (将死)
+    // or stalemate (困毙). Both count as a win for the side that just moved.
+    if (isCheckmate(nextBoard, nextTurn) || isStalemate(nextBoard, nextTurn)) {
       status = 'checkmate';
       winner = turn;
       if (currentEndgame && turn === currentEndgame.turn) {
         status = 'solved';
         solvedIds.add(currentEndgame.id);
       }
-    } else if (isStalemate(nextBoard, nextTurn)) {
-      status = 'stalemate';
     }
 
     set({
@@ -146,7 +146,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ isThinking: true });
     // Run AI asynchronously to not block UI
     setTimeout(() => {
-      const move = getHintMove(board, 'black');
+      const move = getAIMove(board, 'black');
       set({ isThinking: false });
       if (move) get().makeMove(move);
     }, 50);
