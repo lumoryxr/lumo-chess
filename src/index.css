@@ -9,11 +9,17 @@
     color: #f0f0f0;
     font-family: 'Inter', 'Noto Sans SC', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
+    /* Disable pull-to-refresh / overscroll bounce inside the native app */
+    overscroll-behavior: none;
+    -webkit-tap-highlight-color: transparent;
   }
 
   #root {
     width: 100%;
     min-height: 100vh;
+    /* Respect device notches / status & navigation bars (viewport-fit=cover) */
+    padding: env(safe-area-inset-top) env(safe-area-inset-right)
+             env(safe-area-inset-bottom) env(safe-area-inset-left);
   }
 }
 

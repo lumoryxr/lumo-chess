@@ -30,14 +30,14 @@ export function GameView() {
         </div>
       </div>
 
-      {/* Main layout */}
-      <div className="flex-1 flex items-start justify-center gap-6 px-4 py-6 max-w-6xl mx-auto w-full">
+      {/* Main layout — stacks vertically on phones, side-by-side on large screens */}
+      <div className="flex-1 flex flex-col lg:flex-row items-center lg:items-start justify-center gap-4 lg:gap-6 px-3 sm:px-4 py-4 sm:py-6 max-w-6xl mx-auto w-full">
         {/* Board */}
         <motion.div
           initial={{ opacity: 0, scale: 0.97 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.3 }}
-          className="shrink-0 rounded-3xl overflow-hidden shadow-2xl shadow-black/60 border border-amber-900/30"
+          className="w-full max-w-[520px] lg:w-auto lg:max-w-none lg:shrink-0 rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl shadow-black/60 border border-amber-900/30"
           style={{ background: '#f0c060' }}
         >
           <ChessBoard />
@@ -48,7 +48,7 @@ export function GameView() {
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.3, delay: 0.1 }}
-          className="w-72 shrink-0"
+          className="w-full max-w-[520px] lg:w-72 lg:max-w-none lg:shrink-0"
         >
           <GamePanel />
         </motion.div>
