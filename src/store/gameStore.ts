@@ -3,6 +3,7 @@ import type { Board, Color, GameStatus, Move, Position } from '@/types/chess';
 import type { Endgame } from '@/types/chess';
 import { parseFen, getLegalMoves, applyMove, isCheckmate, isStalemate, isInsufficientMaterial, posEq } from '@/engine/board';
 import { findBestMove } from '@/engine/aiClient';
+import { getBookMove } from '@/engine/solutionBook';
 
 // Think-time budgets (ms). The search runs in a Web Worker, so longer budgets
 // make the engine much stronger without freezing the UI.
@@ -170,6 +171,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
   requestHint: () => {
     const { board, turn, status, isHinting } = get();
     if (status !== 'playing' || turn !== 'red' || isHinting) return;
+    // 1) Instant, Pikafish-verified winning move from the offline solution book.
+    const book = getBookMove(board);
+    if (book) { set({ hintMove: book, showHint: true }); return; }
+    // 2) Fallback: live engine search in the Web Worker.
     set({ isHinting: true, showHint: false });
     findBestMove(board, 'red', HINT_THINK_MS).then(move => {
       // Ignore a stale hint if the board changed while computing.
