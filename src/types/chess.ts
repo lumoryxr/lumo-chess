@@ -21,7 +21,7 @@ export interface Move {
 // 10 rows × 9 cols
 export type Board = (Piece | null)[][];
 
-export type GameStatus = 'playing' | 'checkmate' | 'stalemate' | 'solved';
+export type GameStatus = 'playing' | 'checkmate' | 'stalemate' | 'solved' | 'draw';
 
 export interface GameState {
   board: Board;

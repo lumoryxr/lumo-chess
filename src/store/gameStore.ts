@@ -1,8 +1,14 @@
 import { create } from 'zustand';
 import type { Board, Color, GameStatus, Move, Position } from '@/types/chess';
 import type { Endgame } from '@/types/chess';
-import { parseFen, getLegalMoves, applyMove, isCheckmate, isStalemate, posEq } from '@/engine/board';
-import { getHintMove, getAIMove } from '@/engine/ai';
+import { parseFen, getLegalMoves, applyMove, isCheckmate, isStalemate, isInsufficientMaterial, posEq } from '@/engine/board';
+import { findBestMove } from '@/engine/aiClient';
+import { getBookMove } from '@/engine/solutionBook';
+
+// Think-time budgets (ms). The search runs in a Web Worker, so longer budgets
+// make the engine much stronger without freezing the UI.
+const AI_THINK_MS = 1500;
+const HINT_THINK_MS = 3000;
 
 interface GameStore {
   // Navigation
@@ -23,6 +29,7 @@ interface GameStore {
   hintMove: Move | null;
   showHint: boolean;
   isThinking: boolean;
+  isHinting: boolean;
   solvedIds: Set<string>;
 
   // Actions
@@ -54,6 +61,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   hintMove: null,
   showHint: false,
   isThinking: false,
+  isHinting: false,
   solvedIds: new Set(),
 
   openLibrary: () => set({ view: 'library', selected: null, legalMoves: [], showHint: false }),
@@ -74,6 +82,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       hintMove: null,
       showHint: false,
       isThinking: false,
+      isHinting: false,
     });
   },
 
@@ -118,6 +127,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
         status = 'solved';
         solvedIds.add(currentEndgame.id);
       }
+    } else if (isInsufficientMaterial(nextBoard)) {
+      // Neither side has a piece able to force mate → dead draw (和棋).
+      status = 'draw';
     }
 
     set({
@@ -136,7 +148,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     // Trigger AI for black's response (if game still ongoing)
     if (status === 'playing' && nextTurn === 'black') {
-      setTimeout(() => get().triggerAI(), 400);
+      setTimeout(() => get().triggerAI(), 300);
     }
   },
 
@@ -144,19 +156,31 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const { board, turn, status } = get();
     if (status !== 'playing' || turn !== 'black') return;
     set({ isThinking: true });
-    // Run AI asynchronously to not block UI
-    setTimeout(() => {
-      const move = getAIMove(board, 'black');
+    // Search off the main thread; guard against reset/undo while thinking.
+    findBestMove(board, 'black', AI_THINK_MS).then(move => {
+      const s = get();
+      if (s.board !== board || s.status !== 'playing' || s.turn !== 'black') {
+        set({ isThinking: false });
+        return;
+      }
       set({ isThinking: false });
       if (move) get().makeMove(move);
-    }, 50);
+    });
   },
 
   requestHint: () => {
-    const { board, turn, status } = get();
-    if (status !== 'playing' || turn !== 'red') return;
-    const hint = getHintMove(board, turn);
-    set({ hintMove: hint, showHint: true });
+    const { board, turn, status, isHinting } = get();
+    if (status !== 'playing' || turn !== 'red' || isHinting) return;
+    // 1) Instant, Pikafish-verified winning move from the offline solution book.
+    const book = getBookMove(board);
+    if (book) { set({ hintMove: book, showHint: true }); return; }
+    // 2) Fallback: live engine search in the Web Worker.
+    set({ isHinting: true, showHint: false });
+    findBestMove(board, 'red', HINT_THINK_MS).then(move => {
+      // Ignore a stale hint if the board changed while computing.
+      if (get().board !== board) { set({ isHinting: false }); return; }
+      set({ hintMove: move, showHint: !!move, isHinting: false });
+    });
   },
 
   undoMove: () => {

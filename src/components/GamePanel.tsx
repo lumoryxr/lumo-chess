@@ -12,7 +12,7 @@ const difficultyColor: Record<string, string> = {
 export function GamePanel() {
   const {
     currentEndgame, status, winner, turn, moveHistory,
-    requestHint, undoMove, resetGame, openLibrary, isThinking,
+    requestHint, undoMove, resetGame, openLibrary, isThinking, isHinting,
   } = useGameStore();
 
   if (!currentEndgame) return null;
@@ -87,6 +87,13 @@ export function GamePanel() {
                 <div className="text-white/70 font-bold text-lg">逼和</div>
               </>
             )}
+            {status === 'draw' && (
+              <>
+                <div className="text-4xl mb-2">🤝</div>
+                <div className="text-white/70 font-bold text-lg">和棋</div>
+                <div className="text-white/50 text-sm mt-1">双方均无取胜子力，无法将死</div>
+              </>
+            )}
           </motion.div>
         ) : (
           <motion.div
@@ -110,13 +117,13 @@ export function GamePanel() {
       <div className="grid grid-cols-2 gap-2.5">
         <button
           onClick={requestHint}
-          disabled={isGameOver || turn !== 'red' || isThinking}
+          disabled={isGameOver || turn !== 'red' || isThinking || isHinting}
           className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm font-medium hover:bg-emerald-500/20 hover:border-emerald-500/40 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className={isHinting ? 'animate-spin' : ''}>
             <circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>
           </svg>
-          提示
+          {isHinting ? '计算中…' : '提示'}
         </button>
 
         <button
